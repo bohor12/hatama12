@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Profile info
+  name      String?
+  gender    String   // 'M', 'F'
+  birthDate DateTime?
+  height    Int?     // in cm
+  location  String?
+  bio       String?
+  photos    String?  // JSON string of photo URLs
+  
+  // New Preferences / Description
+  lookingFor String? // Opis kaj išče
+  interests  String? // JSON string or comma separated tags
+  
+  // Attributes
+  isSmoker  Boolean  @default(false)
+  
+  // Settings
+  voiceCallAllowed Boolean @default(false)
+
+  // Relations
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  
+  filter           Filter?
+  ads              Ad[]
+  
+  // Interest System
+  sentInterests     Interest[] @relation("SentInterests")
+  receivedInterests Interest[] @relation("ReceivedInterests")
+
+  // Chat Rooms
+  roomMessages      RoomMessage[]
+}
+
+model Filter {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+  
+  // Criteria for WHO can message AND SEE THIS user
+  minAge    Int?
+  maxAge    Int?
+  minHeight Int?
+  
+  mustNotSmoke Boolean @default(false)
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  
+  senderId    String
+  sender      User   @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    User   @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  isRead      Boolean @default(false)
+}
+
+model Ad {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  title     String
+  content   String
+  location  String?
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+  
+  // Visibility Settings for this Ad (Optional override of global filter)
+  // For now, we rely on the User's main Filter for visibility or simple logic
+}
+
+model Interest {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  
+  senderId    String
+  sender      User   @relation("SentInterests", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    User   @relation("ReceivedInterests", fields: [receiverId], references: [id])
+  
+  status      String @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  @@unique([senderId, receiverId]) // One interest per pair
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  description String?
+  createdAt DateTime @default(now())
+  
+  messages  RoomMessage[]
+}
+
+model RoomMessage {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id])
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}

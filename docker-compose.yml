@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    container_name: slozmenki-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/prod.db
+      - JWT_SECRET=change-this-secret-in-production
+      - NODE_ENV=production
+    volumes:
+      # Persist the SQLite database
+      - ./data:/app/data
