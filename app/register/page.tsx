@@ -19,7 +19,7 @@ export default function Register() {
     });
 
     if (res.ok) {
-      router.push("/profile");
+      router.push("/browse");
     } else {
       const data = await res.json();
       setError(data.error || "Registracija ni uspela");

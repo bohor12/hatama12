@@ -68,6 +68,7 @@ export default function Profile() {
           })
       });
       alert("Shranjeno!");
+      router.push("/browse");
   };
 
   const handleLogout = async () => {
