@@ -1,36 +1,191 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Slovenia Dating App 🇸🇮
 
-## Getting Started
+Spletna aplikacija za spoznavanje ljudi v Sloveniji, zgrajena z Next.js, Prisma in SQLite.
 
-First, run the development server:
+## Značilnosti
 
+- 🔐 **Avtentikacija uporabnikov** - registracija, prijava, odjava
+- 👤 **Uporabniški profili** - nastavitve profila, fotografije, opis
+- 🔍 **Brskanje po uporabnikih** - iskanje uporabnikov glede na filter
+- 💬 **Sporočila** - pošiljanje in prejemanje sporočil
+- ❤️ **Interesi** - pošiljanje in odobravanje interesov
+- 🏠 **Sobe** - prikazovanje sob za pogovore
+- 📢 **Oglasi** - objavljanje in brskanje po oglasih
+
+## Tehnologije
+
+- **Frontend**: Next.js 15 (App Router), React 19, TailwindCSS
+- **Backend**: Next.js API Routes
+- **Baza podatkov**: SQLite s Prisma ORM
+- **Avtentikacija**: JWT tokens s httpOnly cookies
+- **Ikone**: Lucide React
+
+## Namestitev
+
+### Predpogoji
+
+- Node.js 20+ in npm
+- Git
+
+### Koraki za namestitev
+
+1. **Kloniraj repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd hatapa
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Namesti odvisnosti**
+```bash
+npm install --legacy-peer-deps
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Ustvari `.env` datoteko**
+```bash
+cp .env.example .env
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Generiraj Prisma Client**
+```bash
+npx prisma generate
+```
 
-## Learn More
+5. **Zaženi migracije**
+```bash
+npx prisma migrate dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+6. **Zaženi development server**
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Aplikacija bo dostopna na [http://localhost:3000](http://localhost:3000)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Prisma Studio
 
-## Deploy on Vercel
+Za upravljanje baze podatkov lahko uporabiš Prisma Studio:
+```bash
+npx prisma studio
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Struktura projekta
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+hatapa/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── about/            # About stran
+│   ├── ads/              # Oglasi
+│   ├── browse/           # Brskanje uporabnikov
+│   ├── dashboard/        # Dashboard
+│   ├── login/            # Prijava
+│   ├── messages/         # Sporočila
+│   ├── profile/          # Profil
+│   ├── register/         # Registracija
+│   └── rooms/            # Sobe
+├── lib/                   # Utility funkcije
+│   ├── permissions.ts    # JWT handling
+│   └── prisma.ts         # Prisma klient
+├── prisma/               # Prisma schema in migracije
+│   ├── schema.prisma     # Baza podatkov schema
+│   └── migrations/       # Migracije
+└── public/               # Statične datoteke
+```
+
+## API Endpoints
+
+### Auth
+- `POST /api/auth/register` - Registracija
+- `POST /api/auth/login` - Prijava
+- `POST /api/auth/logout` - Odjava
+
+### Uporabniki
+- `GET /api/user/me` - Pridobi podatke o trenutnem uporabniku
+- `PUT /api/user/me` - Posodobi profil
+- `GET /api/users/browse` - Brskanje po uporabnikih
+
+### Interesi
+- `POST /api/interest` - Pošlji interes
+- `POST /api/interest/approve` - Odobri/zavrni interes
+
+### Sporočila
+- `POST /api/messages/send` - Pošlji sporočilo
+
+### Oglasi
+- `GET /api/ads` - Pridobi vse oglase
+- `POST /api/ads` - Ustvari nov oglas
+
+## Docker
+
+Projekt vključuje Docker konfiguracijo:
+
+```bash
+docker-compose up
+```
+
+## Push na GitHub
+
+Za objavo kode na GitHub:
+
+1. **Ustvari nov repository na GitHubu** (brez README, .gitignore, ali license)
+
+2. **Dodaj remote in pushaj**
+```bash
+git remote add origin https://github.com/TVOJ-USERNAME/hatapa.git
+git branch -M main
+git push -u origin main
+```
+
+3. **Deli URL z Julesom ali Gemini AI** za pomoč pri razvoju!
+
+## Uporaba z AI asistenti (Jules, Gemini)
+
+Ko deliš ta projekt z AI asistenti, jim lahko daš sledeče informacije:
+
+- **Repository URL**: `https://github.com/TVOJ-USERNAME/hatapa`
+- **Glavne tehnologije**: Next.js 15, Prisma, SQLite, TypeScript
+- **Struktura baze**: Glej `prisma/schema.prisma`
+- **API dokumentacija**: Glej API Endpoints zgoraj
+
+## Development
+
+```bash
+# Zagon dev serverja
+npm run dev
+
+# Build production
+npm run build
+
+# Zagon production
+npm start
+
+# Linting
+npm run lint
+
+# Prisma Studio
+npx prisma studio
+
+# Nova migracija
+npx prisma migrate dev --name naziv_migracije
+```
+
+## TODO / Naslednji koraki
+
+- [ ] Implementacija real-time sporočil (WebSocket)
+- [ ] Upload fotografij
+- [ ] Napredno filtriranje uporabnikov
+- [ ] Email verificiranje
+- [ ] Password reset funkcionalnost
+- [ ] Notifikacije
+- [ ] Izboljšan UI/UX
+- [ ] Unit in integration testi
+- [ ] Deployment na produkcijo
+
+## Prispevanje
+
+Vsak je dobrodošel prispevati! Prosim ustvari pull request ali issue.
+
+## Licenca
+
+MIT
