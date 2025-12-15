@@ -26,13 +26,22 @@ export default function Browse() {
     const childRefs = useMemo(() => Array(users.length).fill(0).map(i => React.createRef<any>()), [users.length]);
 
     useEffect(() => {
-        fetch("/api/users/browse")
-            .then(res => res.json())
+        fetch("/api/users/browse", { method: 'GET' })
+            .then(async (res) => {
+                if (!res.ok) {
+                    throw new Error(`Status: ${res.status}`);
+                }
+                return res.json();
+            })
             .then(data => {
                 if (Array.isArray(data)) {
                     setUsers(data);
                     setCurrentIndex(data.length - 1);
                 }
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching users:", err);
                 setLoading(false);
             });
     }, []);

@@ -104,9 +104,21 @@ export default function Profile() {
     }
   };
 
-  const handleRemovePhoto = (indexToRemove: number) => {
+  const handleRemovePhoto = async (indexToRemove: number) => {
     const updatedPhotos = photos.filter((_, index) => index !== indexToRemove);
     setPhotos(updatedPhotos);
+
+    // Save changes immediately
+    try {
+        await fetch("/api/user/me", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ photos: updatedPhotos })
+        });
+    } catch (e) {
+        console.error("Failed to save photo removal", e);
+        // Revert on failure? For now just log.
+    }
   };
 
   const handleLogout = async () => {
