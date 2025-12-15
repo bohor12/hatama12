@@ -1,63 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-this';
+import { getCurrentUser } from '@/lib/permissions';
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get('token')?.value;
-    if (!token) return NextResponse.json({ error: 'Niste prijavljeni' }, { status: 401 });
+    const sender = await getCurrentUser();
+    if (!sender) {
+      return NextResponse.json({ error: 'Niste prijavljeni' }, { status: 401 });
+    }
+    const senderId = sender.id;
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    const senderId = decoded.userId;
-
-    const body = await req.json();
-    const { receiverId } = body;
-
-    if (!receiverId) return NextResponse.json({ error: 'Manjkajoči podatki' }, { status: 400 });
-
-    // Check if interest already exists
-    const existing = await prisma.interest.findUnique({
-        where: {
-            senderId_receiverId: { senderId, receiverId }
-        }
-    });
-
-    if (existing) {
-        return NextResponse.json({ error: 'Zanimanje že poslano' }, { status: 400 });
+    const { receiverId } = await req.json();
+    if (!receiverId) {
+      return NextResponse.json({ error: 'Manjkajoči podatki' }, { status: 400 });
     }
 
-    const interest = await prisma.interest.create({
-        data: {
-            senderId,
-            receiverId,
-            status: 'PENDING'
-        }
+    if (senderId === receiverId) {
+      return NextResponse.json({ error: 'Ne morete si poslati zanimanja' }, { status: 400 });
+    }
+
+    // Check if the other person has already shown interest in us
+    const mutualInterest = await prisma.interest.findUnique({
+      where: {
+        senderId_receiverId: {
+          senderId: receiverId,
+          receiverId: senderId,
+        },
+      },
     });
 
-    return NextResponse.json({ message: "Zanimanje poslano!", interest });
+    if (mutualInterest) {
+      // It's a match!
+      const [updatedInterest, newInterest] = await prisma.$transaction([
+        prisma.interest.update({
+          where: { id: mutualInterest.id },
+          data: { status: 'APPROVED' },
+        }),
+        prisma.interest.create({
+          data: {
+            senderId: senderId,
+            receiverId: receiverId,
+            status: 'APPROVED',
+          },
+        }),
+      ]);
+      return NextResponse.json({ message: "It's a match!", match: true, interest: newInterest });
+    } else {
+      // It's a one-way interest, create it if it doesn't exist
+      const existingInterest = await prisma.interest.findUnique({
+        where: {
+          senderId_receiverId: { senderId, receiverId },
+        },
+      });
+
+      if (existingInterest) {
+        return NextResponse.json({ error: 'Zanimanje že poslano' }, { status: 400 });
+      }
+
+      const interest = await prisma.interest.create({
+        data: {
+          senderId,
+          receiverId,
+          status: 'PENDING',
+        },
+      });
+      return NextResponse.json({ message: "Zanimanje poslano!", match: false, interest });
+    }
   } catch (error) {
+    console.error("Interest API Error:", error);
     return NextResponse.json({ error: 'Napaka na strežniku' }, { status: 500 });
   }
 }
 
-// Get interests sent TO me
+// Get interests sent TO me (for notifications/approvals page)
 export async function GET(req: NextRequest) {
-    try {
-        const token = req.cookies.get('token')?.value;
-        if (!token) return NextResponse.json({ error: 'Niste prijavljeni' }, { status: 401 });
-    
-        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-        const userId = decoded.userId;
-
-        const interests = await prisma.interest.findMany({
-            where: { receiverId: userId, status: 'PENDING' },
-            include: { sender: { select: { id: true, name: true, height: true, birthDate: true, photos: true } } }
-        });
-
-        return NextResponse.json(interests);
-    } catch (error) {
-        return NextResponse.json({ error: 'Napaka na strežniku' }, { status: 500 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Niste prijavljeni' }, { status: 401 });
     }
+    const userId = user.id;
+
+    const interests = await prisma.interest.findMany({
+      where: { receiverId: userId, status: 'PENDING' },
+      include: {
+        sender: {
+          select: { id: true, name: true, photos: true },
+        },
+      },
+    });
+
+    return NextResponse.json(interests);
+  } catch (error) {
+    console.error("Get Interests Error:", error);
+    return NextResponse.json({ error: 'Napaka na strežniku' }, { status: 500 });
+  }
 }

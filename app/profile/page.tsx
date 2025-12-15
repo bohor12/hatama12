@@ -13,6 +13,9 @@ export default function Profile() {
   const [birthDate, setBirthDate] = useState("");
   const [isSmoker, setIsSmoker] = useState(false);
   const [voiceCallAllowed, setVoiceCallAllowed] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+
 
   // Filter States
   const [minHeight, setMinHeight] = useState("");
@@ -37,6 +40,7 @@ export default function Profile() {
           setBirthDate(data.birthDate ? data.birthDate.split('T')[0] : "");
           setIsSmoker(data.isSmoker || false);
           setVoiceCallAllowed(data.voiceCallAllowed || false);
+          setPhotos(data.photos ? JSON.parse(data.photos) : []);
           
           if (data.filter) {
               setMinHeight(data.filter.minHeight || "");
@@ -71,6 +75,35 @@ export default function Profile() {
       router.push("/browse");
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/user/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setPhotos(prev => [...prev, data.url]);
+        alert("Fotografija uspešno naložena!");
+      } else {
+        alert("Napaka pri nalaganju fotografije.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Napaka pri nalaganju fotografije.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
@@ -92,6 +125,33 @@ export default function Profile() {
             <div>
                 <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">O Meni</h2>
                 <div className="space-y-4">
+                    {/* Photo Upload Section */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Moje Fotografije</h3>
+                        <div className="grid grid-cols-3 gap-4 mb-4">
+                            {photos.map((photo, index) => (
+                                <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
+                                    <img src={photo} alt={`User photo ${index + 1}`} className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                            <div className="relative aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={handleImageUpload} 
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                                    disabled={uploading}
+                                />
+                                <div className="text-center">
+                                    {uploading ? (
+                                        <p className="text-sm text-gray-500">Nalagam...</p>
+                                    ) : (
+                                        <p className="text-sm text-gray-500">+</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Ime / Vzdevek</label>
                         <input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full px-4 py-2 border rounded-lg" />
