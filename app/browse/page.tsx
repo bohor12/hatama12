@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { ArrowLeft, X, Check } from "lucide-react";
 import TinderCard from 'react-tinder-card';
 
