@@ -99,7 +99,7 @@ function BrowseContent() {
                         {users.map((user, index) => {
                             const userPhotos = parsePhotos(user.photos);
                             const mainPhoto = userPhotos.length > 0 ? userPhotos[0] : '/placeholder.png';
-                            
+
                             return (
                                 <TinderCard
                                     ref={childRefs[index]}
