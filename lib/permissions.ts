@@ -1,4 +1,33 @@
 import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-this';
+
+export async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) return null;
+
+    // Return user without password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...safeUser } = user;
+    return safeUser;
+  } catch (error) {
+    return null;
+  }
+}
 
 export async function canUserMessage(senderId: string, receiverId: string): Promise<{ allowed: boolean; reason?: string }> {
   // 1. Fetch sender's attributes
