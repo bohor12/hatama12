@@ -95,19 +95,19 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
     let interests: string[] = [];
     try { if (user.interests) interests = JSON.parse(user.interests); } catch (e) {}
 
-    let partnerTraits = "";
+    let partnerTraits: string[] = [];
     try {
         if (user.partnerTraits) {
             // Check if it's JSON array or simple string
             if (user.partnerTraits.startsWith('[')) {
-                partnerTraits = JSON.parse(user.partnerTraits).join(', ');
+                partnerTraits = JSON.parse(user.partnerTraits);
             } else if (user.partnerTraits.startsWith('"')) {
-                 partnerTraits = JSON.parse(user.partnerTraits);
+                 partnerTraits = [JSON.parse(user.partnerTraits)];
             } else {
-                partnerTraits = user.partnerTraits;
+                partnerTraits = [user.partnerTraits];
             }
         }
-    } catch (e) { partnerTraits = user.partnerTraits || ""; }
+    } catch (e) { partnerTraits = []; }
 
 
     return (
@@ -202,17 +202,16 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
                                     </div>
                                 )}
 
-                                {partnerTraits && (
+                                {partnerTraits.length > 0 && (
                                      <div>
                                         <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wide mb-1 mt-4">Kaj me privlači</h3>
-                                        <p className="italic text-gray-600 bg-pink-50 p-3 rounded-lg border border-pink-100">{partnerTraits}</p>
-                                    </div>
-                                )}
-
-                                {user.lookingFor && !partnerTraits && (
-                                     <div>
-                                        <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wide mb-1 mt-4">Iščem</h3>
-                                        <p>{user.lookingFor}</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {partnerTraits.map((trait, i) => (
+                                                <span key={i} className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-sm">
+                                                    {trait}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

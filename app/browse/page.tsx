@@ -141,6 +141,22 @@ function BrowseContent() {
                                 if (user.interests) interests = JSON.parse(user.interests);
                             } catch (e) {}
 
+                            let partnerTraits: string[] = [];
+                            try {
+                                if (user.partnerTraits) {
+                                    if (user.partnerTraits.startsWith('[')) {
+                                        partnerTraits = JSON.parse(user.partnerTraits);
+                                    } else if (user.partnerTraits.startsWith('"')) {
+                                         // JSON string of string? Rare but possible if saved as "text" json
+                                         partnerTraits = [JSON.parse(user.partnerTraits)];
+                                    } else {
+                                        // Plain text fallback
+                                        partnerTraits = [user.partnerTraits];
+                                    }
+                                }
+                            } catch (e) {}
+
+
                             return (
                                 <TinderCard
                                     ref={childRefs[index]}
@@ -174,6 +190,14 @@ function BrowseContent() {
                                                         <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
                                                         {user.location || "Slovenija"}
                                                     </p>
+
+                                                    {/* Traits on Card (Highlighted) */}
+                                                    <div className="flex flex-wrap gap-1 mb-2">
+                                                        {partnerTraits.slice(0, 4).map(trait => (
+                                                            <span key={trait} className="text-xs bg-purple-600 px-2 py-0.5 rounded-full">{trait}</span>
+                                                        ))}
+                                                        {partnerTraits.length > 4 && <span className="text-xs bg-purple-600 px-2 py-0.5 rounded-full">+{partnerTraits.length - 4}</span>}
+                                                    </div>
 
                                                     {/* Interests */}
                                                      <div className="flex flex-wrap gap-1 mt-1">

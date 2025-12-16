@@ -11,6 +11,14 @@ const RELATIONSHIP_OPTIONS = [
     { id: "LongTerm", label: "Resna zveza" },
 ];
 
+// Partner Traits Options
+const TRAIT_OPTIONS = [
+    "Iskrenost", "Humor", "Zvestoba", "Spoštovanje", "Družina",
+    "Komunikacija", "Šport", "Potovanja", "Kariera", "Videz",
+    "Zabava", "Strast", "Nežnost", "Inteligentnost", "Ambicioznost",
+    "Urejenost", "Pustolovski duh", "Zanesljivost", "Sproščenost"
+];
+
 export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -30,7 +38,9 @@ export default function Profile() {
   const [description, setDescription] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
-  const [partnerTraits, setPartnerTraits] = useState(""); // Simplified to text area for "What attracts me"
+
+  // Partner Traits as Tags
+  const [partnerTraits, setPartnerTraits] = useState<string[]>([]);
 
   // Preview
   const [showPreview, setShowPreview] = useState(false);
@@ -64,14 +74,25 @@ export default function Profile() {
           try {
               setRelationshipTypes(data.relationshipTypes ? JSON.parse(data.relationshipTypes) : []);
               setInterests(data.interests ? JSON.parse(data.interests) : []);
-              setPartnerTraits(data.partnerTraits ? JSON.parse(data.partnerTraits) : ""); // Assuming stored as string JSON, but if text just use text
+
+              if (data.partnerTraits) {
+                  // Handle both old string format and new JSON array format
+                  if (data.partnerTraits.startsWith('[')) {
+                      setPartnerTraits(JSON.parse(data.partnerTraits));
+                  } else if (data.partnerTraits.startsWith('"')) {
+                       // JSON string of string?
+                       setPartnerTraits(JSON.parse(data.partnerTraits));
+                  } else {
+                      // It was plain text before, reset or ignore?
+                      // Let's reset to empty array as text won't map to tags easily
+                      // or if short, make it one tag
+                       setPartnerTraits([]);
+                  }
+              }
           } catch(e) {
-             // Fallback if parsing fails
-             if (typeof data.partnerTraits === 'string' && !data.partnerTraits.startsWith('"')) {
-                 setPartnerTraits(data.partnerTraits);
-             }
+             setPartnerTraits([]);
           }
-          setDescription(data.bio || ""); // Map bio to description
+          setDescription(data.bio || "");
 
           if (data.filter) {
               setMinHeight(data.filter.minHeight || "");
@@ -104,7 +125,7 @@ export default function Profile() {
               relationshipTypes,
               interests,
               description,
-              partnerTraits
+              partnerTraits // sending array now
           })
       });
       alert("Shranjeno!");
@@ -166,6 +187,13 @@ export default function Profile() {
           if (prev.includes(id)) return prev.filter(x => x !== id);
           return [...prev, id];
       })
+  };
+
+  const toggleTrait = (trait: string) => {
+      setPartnerTraits(prev => {
+          if (prev.includes(trait)) return prev.filter(t => t !== trait);
+          return [...prev, trait];
+      });
   };
 
   const addInterest = (e: React.KeyboardEvent) => {
@@ -285,6 +313,22 @@ export default function Profile() {
                              </div>
                         </div>
 
+                        {/* Partner Traits - Selectable Tags */}
+                        <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-2">Kaj me privlači / Kaj iščem? (Izberi)</label>
+                             <div className="flex flex-wrap gap-2">
+                                 {TRAIT_OPTIONS.map(trait => (
+                                     <button
+                                        key={trait}
+                                        onClick={() => toggleTrait(trait)}
+                                        className={`px-3 py-1 rounded-full text-sm border transition ${partnerTraits.includes(trait) ? 'bg-purple-100 border-purple-500 text-purple-700 font-bold' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                     >
+                                         {trait}
+                                     </button>
+                                 ))}
+                             </div>
+                        </div>
+
                         {/* Description */}
                         <div>
                              <label className="block text-sm font-medium text-gray-700 mb-1">O meni / Kaj rad/a počnem</label>
@@ -297,17 +341,6 @@ export default function Profile() {
                              ></textarea>
                         </div>
 
-                        {/* Partner Traits */}
-                        <div>
-                             <label className="block text-sm font-medium text-gray-700 mb-1">Kaj iščem / Kaj me privlači</label>
-                             <textarea
-                                value={partnerTraits}
-                                onChange={e => setPartnerTraits(e.target.value)}
-                                rows={3}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-pink-500 focus:border-pink-500 outline-none"
-                                placeholder="Lastnosti, ki jih iščem pri partnerju..."
-                             ></textarea>
-                        </div>
 
                          {/* Interests */}
                         <div>
@@ -403,7 +436,7 @@ export default function Profile() {
                                 <span className="text-xl font-normal opacity-90">{age}</span>
                             </h3>
 
-                            {/* Tags/Chips */}
+                            {/* Tags/Chips - Showing Traits instead of Bio now */}
                             <div className="flex flex-wrap gap-1 mt-2 mb-2">
                                 {relationshipTypes.map(rt => {
                                     const label = RELATIONSHIP_OPTIONS.find(o => o.id === rt)?.label;
@@ -411,9 +444,14 @@ export default function Profile() {
                                 })}
                             </div>
 
-                            <p className="text-sm opacity-90 line-clamp-2 mb-2">
-                                {description || "Brez opisa..."}
-                            </p>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                                {partnerTraits.slice(0, 5).map(trait => (
+                                     <span key={trait} className="text-xs bg-purple-600 px-2 py-0.5 rounded-full">{trait}</span>
+                                ))}
+                                {partnerTraits.length > 5 && <span className="text-xs bg-purple-600 px-2 py-0.5 rounded-full">+{partnerTraits.length - 5}</span>}
+                            </div>
+
+                            {/* No Bio Description per request "Opis pa ostane seveda spodaj" */}
 
                              <div className="flex flex-wrap gap-1 mt-1">
                                 {interests.slice(0, 3).map(tag => (
