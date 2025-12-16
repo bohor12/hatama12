@@ -34,6 +34,7 @@ model User {
   
   // Attributes
   isSmoker  Boolean  @default(false)
+  isPremium Boolean  @default(false)
   
   // Settings
   voiceCallAllowed Boolean @default(false)
@@ -78,6 +79,7 @@ model Message {
   receiver    User   @relation("ReceivedMessages", fields: [receiverId], references: [id])
 
   isRead      Boolean @default(false)
+  isDirectRequest Boolean @default(false)
 }
 
 model Ad {
