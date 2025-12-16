@@ -88,6 +88,7 @@ model Ad {
   title     String
   content   String
   location  String?
+  contactType String? // Kaj išče (npr. Seks za eno noč, Prijateljstvo...)
   createdAt DateTime @default(now())
   isActive  Boolean  @default(true)
   
