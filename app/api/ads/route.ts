@@ -13,8 +13,21 @@ export async function POST(req: NextRequest) {
     const userId = decoded.userId;
 
     const body = await req.json();
-    const { title, content, location } = body;
+    const { title, content, location, contactType } = body;
     
+    // Validate contactType
+    const ALLOWED_TYPES = [
+        "Seks za eno noč",
+        "Prijateljstvo",
+        "Reden seks",
+        "Resna zveza",
+        "Samo klepet",
+        "Drugo"
+    ];
+    if (contactType && !ALLOWED_TYPES.includes(contactType)) {
+        return NextResponse.json({ error: 'Neveljaven tip kontakta.' }, { status: 400 });
+    }
+
     // Check limit for Men
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user?.gender === 'M') {
@@ -31,7 +44,8 @@ export async function POST(req: NextRequest) {
             userId,
             title,
             content,
-            location
+            location,
+            contactType
         }
     });
 
