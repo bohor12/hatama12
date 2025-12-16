@@ -104,6 +104,23 @@ export default function Profile() {
     }
   };
 
+  const handleRemovePhoto = async (indexToRemove: number) => {
+    const updatedPhotos = photos.filter((_, index) => index !== indexToRemove);
+    setPhotos(updatedPhotos);
+    
+    // Save changes immediately
+    try {
+        await fetch("/api/user/me", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ photos: updatedPhotos })
+        });
+    } catch (e) {
+        console.error("Failed to save photo removal", e);
+        // Revert on failure? For now just log.
+    }
+  };
+
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
@@ -128,13 +145,27 @@ export default function Profile() {
                     {/* Photo Upload Section */}
                     <div>
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">Moje Fotografije</h3>
+                        <p className="text-sm text-gray-500 mb-3">
+                            Sistem bo samodejno prilagodil sliko okvirju. Svetujemo, da naložite sliko, kjer ste jasno vidni.
+                            Če vam slika ni všeč, jo lahko preprosto odstranite.
+                        </p>
                         <div className="grid grid-cols-3 gap-4 mb-4">
                             {photos.map((photo, index) => (
-                                <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
+                                <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
                                     <img src={photo} alt={`User photo ${index + 1}`} className="w-full h-full object-cover" />
+                                    <button 
+                                        onClick={() => handleRemovePhoto(index)}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Odstrani fotografijo"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
                                 </div>
                             ))}
-                            <div className="relative aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                            <div className="relative aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:bg-gray-50 transition">
                                 <input 
                                     type="file" 
                                     accept="image/*" 
