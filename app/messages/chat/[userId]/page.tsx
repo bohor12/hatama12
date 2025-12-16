@@ -48,10 +48,6 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
 
         // Optimistic UI (temporary ID)
         const tempId = Date.now().toString();
-        // Assume 'me' is the sender for optimistic update.
-        // In real data, senderId will be my actual ID. We handle display logic below.
-        // We'll use 'me' as a marker, or ideally we know our own ID.
-        // For simplicity, let's just push and refresh.
 
         setNewMessage("");
 

@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Return the created message
     return NextResponse.json(message);
   } catch (error) {
     return NextResponse.json({ error: 'Napaka pri pošiljanju' }, { status: 500 });

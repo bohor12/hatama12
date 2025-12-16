@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import { Heart, MessageCircle, MapPin, Ruler, Calendar, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import ClientButtons from "./ClientButtons"; // We'll separate client logic for buttons
+import ClientButtons from "./ClientButtons";
 
 // Helper to parse photos
 const parsePhotos = (photos: string | null) => {

@@ -26,7 +26,6 @@ export default function ClientButtons({ userId, initialIsLiked }: { userId: stri
     };
 
     const handleMessage = () => {
-        // Now redirects directly to the chat with this user
         router.push(`/messages/chat/${userId}`);
     };
 
