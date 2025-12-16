@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useMemo, useRef, createRef, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useMemo, createRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { X, Check, Info } from "lucide-react";
 import TinderCard from 'react-tinder-card';
 import Navbar from "../components/Navbar";
@@ -21,6 +21,7 @@ const parsePhotos = (photos: string | null) => {
 
 function BrowseContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const genderParam = searchParams.get('gender');
 
     const [users, setUsers] = useState<any[]>([]);
@@ -48,20 +49,20 @@ function BrowseContent() {
     }, [genderParam]);
 
     const swiped = (direction: string, userId: string) => {
-        console.log('removing: ' + userId);
         if (direction === 'right') {
             sendInterest(userId);
         }
+        // Update index logic if needed, but react-tinder-card handles removal visually.
     };
 
     const outOfFrame = (userId: string) => {
-        console.log(userId + ' left the screen!');
+        // Handle when card leaves screen
     };
 
     const swipe = async (dir: 'left' | 'right') => {
         if (currentIndex >= 0 && currentIndex < users.length && childRefs[currentIndex].current) {
             await childRefs[currentIndex].current.swipe(dir);
-            setCurrentIndex(prevIndex => prevIndex - 1); // Decrement index after swipe
+            setCurrentIndex(prevIndex => prevIndex - 1);
         }
     };
 
@@ -76,23 +77,45 @@ function BrowseContent() {
             if (data.match) {
                 alert("🎉 It's a Match! 🎉");
             }
+        }
+    };
+
+    const handleGenderChange = (gender: string | null) => {
+        if (gender) {
+            router.push(`/browse?gender=${gender}`);
         } else {
-           // silently fail or log?
-           console.log(data.error);
+            router.push('/browse');
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
             <Navbar />
 
-            <main className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-                <div className="mb-4 text-center">
-                    <h1 className="text-2xl font-bold text-gray-800">
-                        {genderParam === 'M' ? 'Moški' : genderParam === 'F' ? 'Ženske' : 'Vsi Uporabniki'}
-                    </h1>
-                    <p className="text-gray-500 text-sm">Povleci desno za všečkanje!</p>
+            <div className="flex justify-center my-4 px-4">
+                <div className="bg-white rounded-full p-1 shadow-sm flex border border-gray-200">
+                    <button
+                        onClick={() => handleGenderChange('M')}
+                        className={`px-6 py-2 rounded-full font-bold text-sm transition ${genderParam === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-blue-600'}`}
+                    >
+                        Moški
+                    </button>
+                    <button
+                        onClick={() => handleGenderChange('F')}
+                        className={`px-6 py-2 rounded-full font-bold text-sm transition ${genderParam === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-gray-500 hover:text-pink-600'}`}
+                    >
+                        Ženske
+                    </button>
+                    <button
+                        onClick={() => handleGenderChange(null)}
+                        className={`px-6 py-2 rounded-full font-bold text-sm transition ${!genderParam ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}
+                    >
+                        Vsi
+                    </button>
                 </div>
+            </div>
+
+            <main className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-hidden">
 
                 {loading ? <p className="text-gray-500">Nalaganje...</p> : users.length > 0 ? (
                     <div className="w-full max-w-sm h-[65vh] relative">
@@ -109,7 +132,7 @@ function BrowseContent() {
                                     onCardLeftScreen={() => outOfFrame(user.id)}
                                     preventSwipe={['up', 'down']}
                                 >
-                                    <div className="w-full h-full bg-white rounded-3xl shadow-xl overflow-hidden relative border border-gray-200">
+                                    <div className="w-full h-full bg-white rounded-3xl shadow-xl overflow-hidden relative border border-gray-200 select-none cursor-grab active:cursor-grabbing">
                                         <img src={mainPhoto} alt={user.name} className="w-full h-full object-cover pointer-events-none" />
 
                                         {/* Overlay Gradient */}
@@ -120,14 +143,17 @@ function BrowseContent() {
                                                         {user.name || "Uporabnik"}
                                                         <span className="text-xl font-normal opacity-90">{user.birthDate ? new Date().getFullYear() - new Date(user.birthDate).getFullYear() : ""}</span>
                                                     </h3>
-                                                    <p className="text-lg opacity-90">{user.location || "Slovenija"}</p>
+                                                    <p className="text-lg opacity-90 flex items-center gap-1">
+                                                        <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
+                                                        {user.location || "Slovenija"}
+                                                    </p>
                                                 </div>
 
                                                 {/* Info Button to go to details */}
                                                 <Link
                                                     href={`/users/${user.id}`}
-                                                    className="mb-1 p-2 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 transition"
-                                                    onPointerDown={(e) => e.stopPropagation()} // Prevent swipe start
+                                                    className="mb-1 p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 transition hover:scale-110"
+                                                    onPointerDown={(e) => e.stopPropagation()}
                                                 >
                                                     <Info size={24} />
                                                 </Link>
@@ -139,7 +165,7 @@ function BrowseContent() {
                         })}
                     </div>
                 ) : (
-                    <div className="text-center p-10 bg-white rounded-2xl shadow-sm">
+                    <div className="text-center p-10 bg-white rounded-2xl shadow-sm border border-gray-100">
                         <p className="text-xl font-bold text-gray-800 mb-2">Ni več oseb.</p>
                         <p className="text-gray-500 mb-4">Poskusite spremeniti iskanje ali pridite nazaj kasneje.</p>
                         <Link href="/dashboard" className="text-pink-600 font-bold hover:underline">Nazaj na domov</Link>
@@ -151,13 +177,6 @@ function BrowseContent() {
                         <button onClick={() => swipe('left')} className="p-4 bg-white rounded-full shadow-lg text-red-500 hover:bg-red-50 transition-transform transform hover:scale-110 border border-red-100">
                             <X size={32} />
                         </button>
-
-                        {/* Middle button to view profile (alternative to info icon) */}
-                        {currentIndex >= 0 && currentIndex < users.length && (
-                             <Link href={`/users/${users[currentIndex].id}`} className="p-3 bg-white rounded-full shadow-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition">
-                                <Info size={24} />
-                            </Link>
-                        )}
 
                         <button onClick={() => swipe('right')} className="p-4 bg-white rounded-full shadow-lg text-green-500 hover:bg-green-50 transition-transform transform hover:scale-110 border border-green-100">
                             <Check size={32} />
