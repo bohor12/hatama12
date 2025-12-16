@@ -33,7 +33,6 @@ function BrowseContent() {
 
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentIndex, setCurrentIndex] = useState(0);
 
     // Refs for card actions
     const childRefs = useMemo(() => Array(users.length).fill(0).map(i => createRef<any>()), [users.length]);
@@ -49,7 +48,6 @@ function BrowseContent() {
             .then(data => {
                 if (Array.isArray(data)) {
                     setUsers(data);
-                    setCurrentIndex(data.length - 1);
                 }
                 setLoading(false);
             });
@@ -59,17 +57,17 @@ function BrowseContent() {
         if (direction === 'right') {
             sendInterest(userId);
         }
-        // Update index logic if needed, but react-tinder-card handles removal visually.
     };
 
     const outOfFrame = (userId: string) => {
-        // Handle when card leaves screen
+        // Remove the user from the state to ensure it is removed from DOM
+        setUsers(currentUsers => currentUsers.filter(u => u.id !== userId));
     };
 
     const swipe = async (dir: 'left' | 'right') => {
-        if (currentIndex >= 0 && currentIndex < users.length && childRefs[currentIndex].current) {
-            await childRefs[currentIndex].current.swipe(dir);
-            setCurrentIndex(prevIndex => prevIndex - 1); 
+        const index = users.length - 1;
+        if (index >= 0 && childRefs[index].current) {
+            await childRefs[index].current.swipe(dir);
         }
     };
 

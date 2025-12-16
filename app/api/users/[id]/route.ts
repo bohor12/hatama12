@@ -26,6 +26,10 @@ export async function GET(
         lookingFor: true,
         interests: true,
         isSmoker: true,
+        personalTraits: true,
+        partnerTraits: true,
+        voiceCallAllowed: true,
+        relationshipTypes: true,
         // Exclude private info like email, password, etc.
       }
     });
