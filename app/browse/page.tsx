@@ -19,6 +19,13 @@ const parsePhotos = (photos: string | null) => {
     return [];
 };
 
+const RELATIONSHIP_LABELS: Record<string, string> = {
+    "Sex": "Seks",
+    "Dates": "Zmenki",
+    "Friends": "Prijatelji",
+    "LongTerm": "Resna zveza"
+};
+
 function BrowseContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -122,6 +129,17 @@ function BrowseContent() {
                         {users.map((user, index) => {
                             const userPhotos = parsePhotos(user.photos);
                             const mainPhoto = userPhotos.length > 0 ? userPhotos[0] : '/placeholder.png';
+                            
+                            // Parse new fields
+                            let relationshipTypes: string[] = [];
+                            try {
+                                if (user.relationshipTypes) relationshipTypes = JSON.parse(user.relationshipTypes);
+                            } catch (e) {}
+                            
+                            let interests: string[] = [];
+                            try {
+                                if (user.interests) interests = JSON.parse(user.interests);
+                            } catch (e) {}
 
                             return (
                                 <TinderCard
@@ -138,21 +156,39 @@ function BrowseContent() {
                                         {/* Overlay Gradient */}
                                         <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black/60 to-transparent text-white">
                                             <div className="flex justify-between items-end">
-                                                <div>
-                                                    <h3 className="text-3xl font-bold flex items-end gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="text-3xl font-bold flex items-end gap-2 truncate">
                                                         {user.name || "Uporabnik"}
                                                         <span className="text-xl font-normal opacity-90">{user.birthDate ? new Date().getFullYear() - new Date(user.birthDate).getFullYear() : ""}</span>
                                                     </h3>
+                                                    
+                                                    {/* Relationship Types Tags */}
+                                                    <div className="flex flex-wrap gap-1 mt-2 mb-2">
+                                                        {relationshipTypes.slice(0, 3).map(rt => {
+                                                            const label = RELATIONSHIP_LABELS[rt] || rt;
+                                                            return <span key={rt} className="text-xs bg-pink-600 px-2 py-0.5 rounded-full">{label}</span>
+                                                        })}
+                                                    </div>
+
                                                     <p className="text-lg opacity-90 flex items-center gap-1">
                                                         <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
                                                         {user.location || "Slovenija"}
                                                     </p>
+                                                    
+                                                    {/* Interests */}
+                                                     <div className="flex flex-wrap gap-1 mt-1">
+                                                        {interests.slice(0, 3).map(tag => (
+                                                             <span key={tag} className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{tag}</span>
+                                                        ))}
+                                                        {interests.length > 3 && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">+{interests.length - 3}</span>}
+                                                    </div>
+
                                                 </div>
 
                                                 {/* Info Button to go to details */}
                                                 <Link
                                                     href={`/users/${user.id}`}
-                                                    className="mb-1 p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 transition hover:scale-110"
+                                                    className="mb-1 p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 transition hover:scale-110 flex-shrink-0"
                                                     onPointerDown={(e) => e.stopPropagation()} 
                                                 >
                                                     <Info size={24} />

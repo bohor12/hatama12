@@ -15,6 +15,10 @@ export default function Profile() {
   const [voiceCallAllowed, setVoiceCallAllowed] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  
+  // Traits
+  const [personalTraits, setPersonalTraits] = useState<string[]>(Array(5).fill(""));
+  const [partnerTraits, setPartnerTraits] = useState<string[]>(Array(5).fill(""));
 
 
   // Filter States
@@ -42,6 +46,16 @@ export default function Profile() {
           setVoiceCallAllowed(data.voiceCallAllowed || false);
           setPhotos(data.photos ? JSON.parse(data.photos) : []);
           
+          const pTraits = data.personalTraits ? JSON.parse(data.personalTraits) : [];
+          const partnerT = data.partnerTraits ? JSON.parse(data.partnerTraits) : [];
+          
+          // Ensure arrays are length 5
+          const paddedPT = [...pTraits, ...Array(5).fill("")].slice(0, 5);
+          const paddedPartner = [...partnerT, ...Array(5).fill("")].slice(0, 5);
+          
+          setPersonalTraits(paddedPT);
+          setPartnerTraits(paddedPartner);
+
           if (data.filter) {
               setMinHeight(data.filter.minHeight || "");
               setMinAge(data.filter.minAge || "");
@@ -63,6 +77,8 @@ export default function Profile() {
               birthDate,
               isSmoker,
               voiceCallAllowed,
+              personalTraits: personalTraits.filter(t => t.trim() !== ""),
+              partnerTraits: partnerTraits.filter(t => t.trim() !== ""),
               filter: {
                   minHeight,
                   minAge,
@@ -207,6 +223,53 @@ export default function Profile() {
                             <label htmlFor="voice" className="text-sm text-gray-700">Dovolim glasovne klice</label>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">Če izklopljeno, vas nihče ne more poklicati.</p>
+                    </div>
+                </div>
+                
+                {/* Traits Section */}
+                <div className="mt-8 border-t pt-6">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">Osebnost in Zanimanja</h2>
+                    
+                    <div className="mb-6">
+                         <h3 className="font-semibold text-blue-600 mb-2">Kakšen sem / Kakšna sem (Max 5, 1-2 besedi)</h3>
+                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {personalTraits.map((trait, idx) => (
+                                <input 
+                                    key={`pt-${idx}`}
+                                    type="text"
+                                    value={trait}
+                                    placeholder={`Lastnost ${idx + 1}`}
+                                    maxLength={20}
+                                    className="border rounded px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    onChange={(e) => {
+                                        const newVal = [...personalTraits];
+                                        newVal[idx] = e.target.value;
+                                        setPersonalTraits(newVal);
+                                    }}
+                                />
+                            ))}
+                         </div>
+                    </div>
+
+                    <div>
+                         <h3 className="font-semibold text-pink-600 mb-2">Kaj me privlači (Max 5, 1-2 besedi)</h3>
+                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {partnerTraits.map((trait, idx) => (
+                                <input 
+                                    key={`partner-${idx}`}
+                                    type="text"
+                                    value={trait}
+                                    placeholder={`Lastnost ${idx + 1}`}
+                                    maxLength={20}
+                                    className="border rounded px-3 py-2 text-sm focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+                                    onChange={(e) => {
+                                        const newVal = [...partnerTraits];
+                                        newVal[idx] = e.target.value;
+                                        setPartnerTraits(newVal);
+                                    }}
+                                />
+                            ))}
+                         </div>
                     </div>
                 </div>
             </div>
