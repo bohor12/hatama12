@@ -31,7 +31,8 @@ model User {
   interests  String? // JSON string or comma separated tags
   personalTraits String? // JSON string (What they are like)
   partnerTraits  String? // JSON string (What attracts them)
-  
+  relationshipTypes String? // JSON string (What kind of relationship they want)
+
   // Attributes
   isSmoker  Boolean  @default(false)
   
