@@ -29,6 +29,8 @@ model User {
   // New Preferences / Description
   lookingFor String? // Opis kaj išče
   interests  String? // JSON string or comma separated tags
+  relationshipTypes String? // JSON string: ["Sex", "Dates", "Friends", "LongTerm"]
+  partnerTraits     String? // JSON string or text: traits they look for
   
   // Attributes
   isSmoker  Boolean  @default(false)

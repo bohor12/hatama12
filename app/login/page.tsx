@@ -18,7 +18,7 @@ export default function Login() {
     });
 
     if (res.ok) {
-      router.push("/profile");
+      router.push("/dashboard");
     } else {
       const data = await res.json();
       setError(data.error || "Prijava ni uspela");

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
-import { MessageCircle, Heart, MapPin, Ruler, Cigarette, Info, ArrowLeft, Check } from "lucide-react";
+import { MessageCircle, Heart, MapPin, Ruler, Cigarette, Info, ArrowLeft, Check, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // Helper to parse photos
@@ -16,6 +16,13 @@ const parsePhotos = (photos: string | null) => {
         // ignore
     }
     return [];
+};
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+    "Sex": "Seks",
+    "Dates": "Zmenki",
+    "Friends": "Prijatelji",
+    "LongTerm": "Resna zveza"
 };
 
 export default function UserProfile({ params }: { params: Promise<{ id: string }> }) {
@@ -81,6 +88,28 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
     const mainPhoto = photos.length > 0 ? photos[mainPhotoIndex] : '/placeholder.png';
     const age = user.birthDate ? new Date().getFullYear() - new Date(user.birthDate).getFullYear() : "?";
 
+    // Enhanced Fields Parsing
+    let relationshipTypes: string[] = [];
+    try { if (user.relationshipTypes) relationshipTypes = JSON.parse(user.relationshipTypes); } catch (e) {}
+
+    let interests: string[] = [];
+    try { if (user.interests) interests = JSON.parse(user.interests); } catch (e) {}
+
+    let partnerTraits = "";
+    try {
+        if (user.partnerTraits) {
+            // Check if it's JSON array or simple string
+            if (user.partnerTraits.startsWith('[')) {
+                partnerTraits = JSON.parse(user.partnerTraits).join(', ');
+            } else if (user.partnerTraits.startsWith('"')) {
+                 partnerTraits = JSON.parse(user.partnerTraits);
+            } else {
+                partnerTraits = user.partnerTraits;
+            }
+        }
+    } catch (e) { partnerTraits = user.partnerTraits || ""; }
+
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             <Navbar />
@@ -114,29 +143,38 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
                     {/* Right: Info */}
                     <div className="p-8 flex flex-col justify-between">
                         <div>
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                                        {user.name} <span className="text-xl text-gray-500 font-normal">{age}</span>
-                                    </h1>
-                                    <div className="flex items-center text-gray-500 mt-1">
-                                        <MapPin size={16} className="mr-1" />
-                                        {user.location || "Slovenija"}
-                                    </div>
+                            <div className="mb-4">
+                                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                                    {user.name} <span className="text-xl text-gray-500 font-normal">{age}</span>
+                                </h1>
+                                <div className="flex items-center text-gray-500 mt-1">
+                                    <MapPin size={16} className="mr-1" />
+                                    {user.location || "Slovenija"}
                                 </div>
+
+                                {/* Relationship Tags */}
+                                {relationshipTypes.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {relationshipTypes.map(rt => (
+                                            <span key={rt} className="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-semibold">
+                                                {RELATIONSHIP_LABELS[rt] || rt}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <hr className="my-6 border-gray-100" />
 
-                            <div className="space-y-4 text-gray-700">
+                            <div className="space-y-6 text-gray-700">
                                 {user.bio && (
                                     <div>
                                         <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wide mb-1">O meni</h3>
-                                        <p>{user.bio}</p>
+                                        <p className="whitespace-pre-wrap">{user.bio}</p>
                                     </div>
                                 )}
                                 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
                                     {user.height && (
                                         <div className="flex items-center gap-2">
                                             <Ruler className="text-pink-500" size={20} />
@@ -149,7 +187,29 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
                                     </div>
                                 </div>
 
-                                {user.lookingFor && (
+                                {interests.length > 0 && (
+                                    <div>
+                                        <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2">
+                                            <Sparkles size={16} /> Interesi
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {interests.map(tag => (
+                                                <span key={tag} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {partnerTraits && (
+                                     <div>
+                                        <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wide mb-1 mt-4">Kaj me privlači</h3>
+                                        <p className="italic text-gray-600 bg-pink-50 p-3 rounded-lg border border-pink-100">{partnerTraits}</p>
+                                    </div>
+                                )}
+
+                                {user.lookingFor && !partnerTraits && (
                                      <div>
                                         <h3 className="font-bold text-sm text-gray-400 uppercase tracking-wide mb-1 mt-4">Iščem</h3>
                                         <p>{user.lookingFor}</p>
