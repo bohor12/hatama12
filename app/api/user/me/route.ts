@@ -37,7 +37,7 @@ export async function PUT(req: NextRequest) {
       const userId = decoded.userId;
       
       const body = await req.json();
-      const { name, height, birthDate, isSmoker, voiceCallAllowed, filter, photos } = body;
+      const { name, height, birthDate, isSmoker, voiceCallAllowed, filter, photos, personalTraits, partnerTraits } = body;
       
       // Update User Profile
       await prisma.user.update({
@@ -49,7 +49,9 @@ export async function PUT(req: NextRequest) {
               isSmoker,
               voiceCallAllowed,
               // Only update photos if provided
-              ...(photos !== undefined && { photos: JSON.stringify(photos) })
+              ...(photos !== undefined && { photos: JSON.stringify(photos) }),
+              ...(personalTraits !== undefined && { personalTraits: JSON.stringify(personalTraits) }),
+              ...(partnerTraits !== undefined && { partnerTraits: JSON.stringify(partnerTraits) }),
           }
       });
 
