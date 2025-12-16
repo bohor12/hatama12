@@ -18,6 +18,18 @@ const parsePhotos = (photos: string | null) => {
     return [];
 };
 
+const parseTraits = (traits: string | null) => {
+    try {
+        if (traits) {
+            const parsed = JSON.parse(traits);
+            return Array.isArray(parsed) ? parsed : [];
+        }
+    } catch (e) {
+        // ignore
+    }
+    return [];
+};
+
 export default function UserProfile({ params }: { params: Promise<{ id: string }> }) {
     const { id: userId } = use(params);
     const router = useRouter();
@@ -78,6 +90,9 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
     if (!user) return <div className="min-h-screen flex items-center justify-center">Uporabnik ne obstaja.</div>;
 
     const photos = parsePhotos(user.photos);
+    const personalTraits = parseTraits(user.personalTraits);
+    const partnerTraits = parseTraits(user.partnerTraits);
+
     const mainPhoto = photos.length > 0 ? photos[mainPhotoIndex] : '/placeholder.png';
     const age = user.birthDate ? new Date().getFullYear() - new Date(user.birthDate).getFullYear() : "?";
 
@@ -148,6 +163,37 @@ export default function UserProfile({ params }: { params: Promise<{ id: string }
                                         <span>{user.isSmoker ? "Kadilec" : "Nekadilec"}</span>
                                     </div>
                                 </div>
+
+                                {/* Traits Display */}
+                                {(personalTraits.length > 0 || partnerTraits.length > 0) && (
+                                    <div className="mt-6 space-y-4">
+                                        {personalTraits.length > 0 && (
+                                            <div>
+                                                <h3 className="font-bold text-sm text-blue-600 uppercase tracking-wide mb-2">Kakšen/a sem</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {personalTraits.map((trait: string, i: number) => (
+                                                        <span key={i} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium border border-blue-200">
+                                                            {trait}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {partnerTraits.length > 0 && (
+                                            <div>
+                                                <h3 className="font-bold text-sm text-pink-600 uppercase tracking-wide mb-2">Kaj me privlači</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {partnerTraits.map((trait: string, i: number) => (
+                                                        <span key={i} className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm font-medium border border-pink-200">
+                                                            {trait}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {user.lookingFor && (
                                      <div>
