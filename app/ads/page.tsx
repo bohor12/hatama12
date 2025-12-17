@@ -77,7 +77,7 @@ export default function Ads() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-          
+
         {showCreate && (
             <div className="bg-white p-6 rounded-2xl shadow-xl mb-8 border border-pink-100 animate-fade-in-down">
                 <div className="flex justify-between items-center mb-6">
@@ -102,14 +102,14 @@ export default function Ads() {
                         ))}
                     </div>
 
-                    <input 
+                    <input
                         type="text" placeholder="Naslov (npr. Dve karti za kino...)"
                         className="w-full border-gray-200 bg-gray-50 p-4 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none"
                         value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                         required
                     />
 
-                    <textarea 
+                    <textarea
                         placeholder="Več informacij..."
                         className="w-full border-gray-200 bg-gray-50 p-4 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none h-32 resize-none"
                         value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}

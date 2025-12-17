@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { title, content, location, category, eventDate } = body;
-    
+
     // Check limit for Men
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user?.gender === 'M') {
