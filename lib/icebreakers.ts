@@ -1,0 +1,22 @@
+export const icebreakers = [
+  "Če bi lahko potoval/a kamorkoli ta trenutek, kam bi šel/šla?",
+  "Katera je tvoja najbolj nenavadna navada?",
+  "Kateri film si nazadnje gledal/a in ti je bil res všeč?",
+  "Kaj bi počel/a, če bi zadel/a na lotu?",
+  "Pizza s ananasom: DA ali NE?",
+  "Katera pesem te vedno spravi v dobro voljo?",
+  "Ali verjameš v ljubezen na prvi pogled, ali naj grem še enkrat mimo?",
+  "Kaj je najboljša stvar, ki se ti je zgodila ta teden?",
+  "Če bi moral/a jesti samo eno jed do konca življenja, katera bi to bila?",
+  "Kateri je tvoj sanjski poklic, če denar ne bi bil ovira?",
+  "Ali imaš kakšen skriti talent?",
+  "Kaj je tvoj idealen zmenek?",
+  "Če bi lahko večerjal/a s katero koli znano osebo, koga bi izbral/a?",
+  "Katera knjiga je najbolj vplivala nate?",
+  "Ali si bolj jutranji tip ali nočna ptica?",
+  "Kaj najprej opaziš na nasprotnem spolu?",
+  "Katero supermoč bi si izbral/a in zakaj?",
+  "Kaj je tvoj najljubši spomin iz otroštva?",
+  "Kaj te najbolj nasmeji?",
+  "Če bi bil/a žival, katera bi bil/a?"
+];

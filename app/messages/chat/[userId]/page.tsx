@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState, useRef, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Navbar from "../../../components/Navbar";
+import { icebreakers } from "@/lib/icebreakers";
 
 export default function Chat({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
@@ -13,6 +13,7 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
     const [otherUser, setOtherUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [showIcebreakers, setShowIcebreakers] = useState(false);
 
     // Fetch user info & messages
     useEffect(() => {
@@ -87,6 +88,11 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
         }
     };
 
+    const handleIcebreaker = (question: string) => {
+        setNewMessage(question);
+        setShowIcebreakers(false);
+    };
+
     if (loading) return <div className="min-h-screen flex items-center justify-center">Nalaganje...</div>;
 
     return (
@@ -98,14 +104,17 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
                 </Link>
                 {otherUser && (
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden relative border border-gray-100">
                              {/* Small thumbnail if available */}
                              {otherUser.photos && (
                                  <img src={JSON.parse(otherUser.photos)[0]} className="w-full h-full object-cover" />
                              )}
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900">{otherUser.name}</h1>
+                            <div className="flex items-center gap-1">
+                                <h1 className="font-bold text-gray-900">{otherUser.name}</h1>
+                                {otherUser.isVerified && <CheckCircle size={14} className="text-blue-500 fill-blue-50" />}
+                            </div>
                             <p className="text-xs text-green-500 flex items-center gap-1">
                                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                 Online
@@ -118,8 +127,15 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
             {/* Messages Area */}
             <main className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.length === 0 ? (
-                    <div className="text-center text-gray-400 mt-10">
+                    <div className="text-center text-gray-400 mt-10 space-y-4">
                         <p>Začnite pogovor z {otherUser?.name || "osebo"}.</p>
+                        <button
+                            onClick={() => setShowIcebreakers(!showIcebreakers)}
+                            className="bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-100 transition flex items-center gap-2 mx-auto"
+                        >
+                            <Sparkles size={16} />
+                            Ne veš kaj napisati?
+                        </button>
                     </div>
                 ) : (
                     messages.map((msg) => {
@@ -143,9 +159,33 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
                 <div ref={messagesEndRef} />
             </main>
 
+            {/* Icebreaker Popup */}
+            {showIcebreakers && (
+                <div className="p-4 bg-blue-50 border-t border-blue-100 overflow-x-auto whitespace-nowrap space-x-2">
+                    {icebreakers.sort(() => 0.5 - Math.random()).slice(0, 5).map((q, i) => (
+                        <button
+                            key={i}
+                            onClick={() => handleIcebreaker(q)}
+                            className="inline-block bg-white border border-blue-200 text-blue-800 px-4 py-2 rounded-xl text-sm hover:bg-blue-100 transition shadow-sm"
+                        >
+                            {q}
+                        </button>
+                    ))}
+                    <button onClick={() => setShowIcebreakers(false)} className="text-gray-400 text-xs ml-2 hover:text-gray-600">Zapri</button>
+                </div>
+            )}
+
             {/* Input Area */}
             <footer className="bg-white p-4 border-t border-gray-200">
-                <form onSubmit={handleSend} className="flex gap-2 max-w-4xl mx-auto">
+                <form onSubmit={handleSend} className="flex gap-2 max-w-4xl mx-auto items-center">
+                    <button
+                        type="button"
+                        onClick={() => setShowIcebreakers(!showIcebreakers)}
+                        className="text-gray-400 hover:text-pink-600 p-2 rounded-full hover:bg-pink-50 transition"
+                        title="Ledolomilci"
+                    >
+                        <Sparkles size={20} />
+                    </button>
                     <input 
                         type="text" 
                         value={newMessage}
