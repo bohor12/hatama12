@@ -38,6 +38,10 @@ model User {
   // Settings
   voiceCallAllowed Boolean @default(false)
 
+  // Verification
+  isVerified         Boolean @default(false)
+  verificationStatus String  @default("NONE") // NONE, PENDING, APPROVED, REJECTED
+
   // Relations
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
@@ -88,6 +92,8 @@ model Ad {
   title     String
   content   String
   location  String?
+  eventDate DateTime?
+  category  String   @default("GENERAL") // GENERAL, DATE, ACTIVITY, TRIP
   createdAt DateTime @default(now())
   isActive  Boolean  @default(true)
   
