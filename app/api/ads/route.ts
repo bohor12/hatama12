@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const userId = decoded.userId;
 
     const body = await req.json();
-    const { title, content, location } = body;
+    const { title, content, location, category, eventDate } = body;
     
     // Check limit for Men
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
             userId,
             title,
             content,
-            location
+            location,
+            category: category || "GENERAL",
+            eventDate: eventDate ? new Date(eventDate) : null
         }
     });
 
@@ -42,9 +44,17 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get('category');
+
+    const where: any = { isActive: true };
+    if (category && category !== 'ALL') {
+        where.category = category;
+    }
+
     // Return all active ads
     const ads = await prisma.ad.findMany({
-        where: { isActive: true },
+        where,
         include: { user: { select: { name: true, gender: true } } },
         orderBy: { createdAt: 'desc' }
     });
