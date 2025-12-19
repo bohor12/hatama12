@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const userId = decoded.userId;
 
     const body = await req.json();
-    const { title, content, location } = body;
+    const { title, content, location, category, eventDate } = body;
     
     // Check limit for Men
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
             userId,
             title,
             content,
-            location
+            location,
+            category: category || "GENERAL",
+            eventDate: eventDate ? new Date(eventDate) : null
         }
     });
 
