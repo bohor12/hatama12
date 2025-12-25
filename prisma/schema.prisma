@@ -31,6 +31,12 @@ model User {
   interests  String? // JSON string or comma separated tags
   personalTraits String? // JSON string (What they are like)
   partnerTraits  String? // JSON string (What attracts them)
+  relationshipTypes String? // JSON string (e.g. ["LongTerm", "Dates"])
+
+  // Verification & Status
+  isVerified        Boolean @default(false)
+  verificationStatus String @default("NONE") // NONE, PENDING, APPROVED, REJECTED
+  isPremium         Boolean @default(false)
   
   // Attributes
   isSmoker  Boolean  @default(false)
@@ -88,6 +94,8 @@ model Ad {
   title     String
   content   String
   location  String?
+  category  String   @default("GENERAL") // GENERAL, DATE, DINNER, MOVIE, ACTIVITY, TRIP
+  eventDate DateTime?
   createdAt DateTime @default(now())
   isActive  Boolean  @default(true)
   
