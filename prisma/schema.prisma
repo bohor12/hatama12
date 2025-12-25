@@ -31,12 +31,44 @@ model User {
   interests  String? // JSON string or comma separated tags
   personalTraits String? // JSON string (What they are like)
   partnerTraits  String? // JSON string (What attracts them)
+
+  // Smart Matching Fields
+  tagsSelf       String? // Comma separated: "Mlad,Resen,Sportnik"
+  tagsLookingFor String? // Comma separated: "Starejsa,Milf,Urejena"
+  ageRangeMin    Int     @default(18)
+  ageRangeMax    Int     @default(99)
+  region         String? // e.g. "Osrednjeslovenska"
   
-  // Attributes
-  isSmoker  Boolean  @default(false)
+  // Physical Attributes
+  isSmoker       Boolean  @default(false)
+  hairColor      String?  // Črna, Rjava, Blond, Rdeča, Siva, Brez
+  eyeColor       String?  // Rjave, Modre, Zelene, Sive, Mešane
+  bodyType       String?  // Vitka, Povprečna, Atletska, Krepka, Par extra kg
+  
+  // Lifestyle & Status
+  relationshipType String? // Resna zveza, Prijateljstvo, Pustolovščina, Odprto
+  hasChildren    Boolean? // null = ni določeno
+  wantsChildren  Boolean? // null = ni določeno
+  education      String?  // Osnovna, Srednja, Višja, Visoka, Magisterij, Doktorat
+  occupation     String?  // Prosto besedilo
   
   // Settings
   voiceCallAllowed Boolean @default(false)
+  browseAnonymously Boolean @default(false) // Women can browse without men knowing
+  
+  // Visibility Settings - What others can see
+  showAge        Boolean @default(true)
+  showHeight     Boolean @default(true)
+  showOccupation Boolean @default(true)
+  showEducation  Boolean @default(true)
+  showChildren   Boolean @default(false)  // Sensitive - off by default
+
+  // Verification
+  isVerified         Boolean @default(false)
+  verificationStatus String  @default("NONE") // NONE, PENDING, APPROVED, REJECTED
+
+  // Premium
+  isPremium Boolean @default(false)
 
   // Relations
   sentMessages     Message[] @relation("SentMessages")
@@ -58,12 +90,34 @@ model Filter {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
   
-  // Criteria for WHO can message AND SEE THIS user
+  // Age criteria
   minAge    Int?
   maxAge    Int?
-  minHeight Int?
   
+  // Physical criteria
+  minHeight Int?
+  maxHeight Int?
+  
+  // Lifestyle
   mustNotSmoke Boolean @default(false)
+  
+  // Location
+  preferredRegion String?  // e.g. "Osrednjeslovenska"
+  
+  // Quality filters
+  mustHavePhoto    Boolean @default(false)
+  mustBeVerified   Boolean @default(false)
+  
+  // Physical preferences (can be null = "Vseeno")
+  preferredHairColor  String?  // Črna, Rjava, Blond, etc. or null
+  preferredEyeColor   String?  
+  preferredBodyType   String?  
+  
+  // Lifestyle preferences
+  preferredRelationType String? // Resna zveza, Prijateljstvo, etc.
+  mustNotHaveChildren Boolean @default(false)
+  mustWantChildren    Boolean @default(false)
+  preferredEducation  String? // Minimum education level
 }
 
 model Message {
@@ -77,6 +131,7 @@ model Message {
   receiverId  String
   receiver    User   @relation("ReceivedMessages", fields: [receiverId], references: [id])
 
+  folder      String  @default("PRIMARY") // PRIMARY or OTHERS
   isRead      Boolean @default(false)
 }
 
@@ -88,6 +143,8 @@ model Ad {
   title     String
   content   String
   location  String?
+  eventDate DateTime?
+  category  String   @default("GENERAL") // GENERAL, DATE, ACTIVITY, TRIP
   createdAt DateTime @default(now())
   isActive  Boolean  @default(true)
   
@@ -106,6 +163,8 @@ model Interest {
   receiver    User   @relation("ReceivedInterests", fields: [receiverId], references: [id])
   
   status      String @default("PENDING") // PENDING, APPROVED, REJECTED
+  allowMessage Boolean @default(false)    // If true, sender can message directly to PRIMARY inbox
+  inviteMessage String?                   // Custom message from sender (e.g., "Piši mi!")
   
   @@unique([senderId, receiverId]) // One interest per pair
 }

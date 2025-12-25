@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { X, Check, Info } from "lucide-react";
 import TinderCard from 'react-tinder-card';
 import Navbar from "../components/Navbar";
+import SearchFilters from "../components/browse/SearchFilters";
+import LikeModal from "../components/LikeModal";
 
 // Helper to parse photos JSON safely
 const parsePhotos = (photos: string | null) => {
@@ -33,57 +35,104 @@ function BrowseContent() {
 
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
-    // Refs for card actions
-    const childRefs = useMemo(() => Array(users.length).fill(0).map(i => createRef<any>()), [users.length]);
+    // Like Modal State (for women)
+    const [likeModalOpen, setLikeModalOpen] = useState(false);
+    const [pendingLikeUser, setPendingLikeUser] = useState<any>(null);
+
+    // Search Filters State
+    const [filters, setFilters] = useState({
+        ageMin: 18,
+        ageMax: 99,
+        region: null as string | null,
+        heightMin: 0,
+        hasPhoto: false
+    });
+
+    // Create refs once with a large enough array
+    const childRefs = useMemo(() => Array(100).fill(0).map(() => createRef<any>()), []);
+
+    // Fetch current user to check gender
+    useEffect(() => {
+        fetch("/api/user/me").then(r => r.json()).then(data => {
+            if (data && !data.error) setCurrentUser(data);
+        });
+    }, []);
+
+    // Filter out already swiped users for display
+    const displayUsers = useMemo(() => users.filter(u => !swipedIds.has(u.id)), [users, swipedIds]);
 
     useEffect(() => {
-        let url = "/api/users/browse";
-        if (genderParam) {
-            url += `?gender=${genderParam}`;
-        }
+        let url = new URL("/api/users/browse", window.location.origin);
 
-        fetch(url)
+        if (genderParam) url.searchParams.append("gender", genderParam);
+        url.searchParams.append("ageMin", filters.ageMin.toString());
+        url.searchParams.append("ageMax", filters.ageMax.toString());
+        if (filters.region) url.searchParams.append("region", filters.region);
+        if (filters.heightMin > 0) url.searchParams.append("heightMin", filters.heightMin.toString());
+        if (filters.hasPhoto) url.searchParams.append("hasPhoto", "true");
+
+        fetch(url.toString())
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
                     setUsers(data);
-                    setCurrentIndex(data.length - 1);
+                    // Reset swiped IDs when new data is fetched
+                    setSwipedIds(new Set());
                 }
                 setLoading(false);
             });
-    }, [genderParam]);
+    }, [genderParam, filters]); // Re-fetch when filters change
 
-    const swiped = (direction: string, userId: string) => {
+    const swiped = (direction: string, userId: string, userName: string) => {
+        // Mark as swiped immediately
+        setSwipedIds(prev => new Set(prev).add(userId));
+
         if (direction === 'right') {
-            sendInterest(userId);
+            // If current user is female, show the LikeModal to choose like type
+            if (currentUser?.gender === 'F') {
+                setPendingLikeUser({ id: userId, name: userName });
+                setLikeModalOpen(true);
+            } else {
+                // Men just send regular like
+                sendInterest(userId, false, undefined);
+            }
         }
-        // Update index logic if needed, but react-tinder-card handles removal visually.
     };
 
     const outOfFrame = (userId: string) => {
-        // Handle when card leaves screen
+        // Already handled by swipedIds, but keep for safety
+        setSwipedIds(prev => new Set(prev).add(userId));
     };
 
     const swipe = async (dir: 'left' | 'right') => {
-        if (currentIndex >= 0 && currentIndex < users.length && childRefs[currentIndex].current) {
-            await childRefs[currentIndex].current.swipe(dir);
-            setCurrentIndex(prevIndex => prevIndex - 1); 
+        const index = displayUsers.length - 1;
+        if (index >= 0 && childRefs[index].current) {
+            await childRefs[index].current.swipe(dir);
         }
     };
 
-    const sendInterest = async (receiverId: string) => {
+    const sendInterest = async (receiverId: string, allowMessage: boolean, inviteMessage?: string) => {
         const res = await fetch("/api/interest", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ receiverId })
+            body: JSON.stringify({ receiverId, allowMessage, inviteMessage })
         });
         const data = await res.json();
         if (res.ok) {
             if (data.match) {
                 alert("🎉 It's a Match! 🎉");
             }
+        }
+    };
+
+    // Handle modal confirmation from women
+    const handleLikeConfirm = (allowMessage: boolean, inviteMessage?: string) => {
+        if (pendingLikeUser) {
+            sendInterest(pendingLikeUser.id, allowMessage, inviteMessage);
+            setPendingLikeUser(null);
         }
     };
 
@@ -97,23 +146,34 @@ function BrowseContent() {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+            {/* Like Modal for Women */}
+            <LikeModal
+                isOpen={likeModalOpen}
+                onClose={() => setLikeModalOpen(false)}
+                onConfirm={handleLikeConfirm}
+                userName={pendingLikeUser?.name || 'Uporabnik'}
+            />
+
             <Navbar />
+
+            {/* Filter Component */}
+            <SearchFilters onApply={setFilters} currentFilters={filters} />
 
             <div className="flex justify-center my-4 px-4">
                 <div className="bg-white rounded-full p-1 shadow-sm flex border border-gray-200">
-                    <button 
+                    <button
                         onClick={() => handleGenderChange('M')}
                         className={`px-6 py-2 rounded-full font-bold text-sm transition ${genderParam === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-blue-600'}`}
                     >
                         Moški
                     </button>
-                    <button 
+                    <button
                         onClick={() => handleGenderChange('F')}
                         className={`px-6 py-2 rounded-full font-bold text-sm transition ${genderParam === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-gray-500 hover:text-pink-600'}`}
                     >
                         Ženske
                     </button>
-                    <button 
+                    <button
                         onClick={() => handleGenderChange(null)}
                         className={`px-6 py-2 rounded-full font-bold text-sm transition ${!genderParam ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-gray-900'}`}
                     >
@@ -123,30 +183,31 @@ function BrowseContent() {
             </div>
 
             <main className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-                
-                {loading ? <p className="text-gray-500">Nalaganje...</p> : users.length > 0 ? (
+
+                {loading ? <p className="text-gray-500">Nalaganje...</p> : displayUsers.length > 0 ? (
                     <div className="w-full max-w-sm h-[65vh] relative">
-                        {users.map((user, index) => {
+                        {/* Card Loop (same as before) */}
+                        {displayUsers.map((user, index) => {
                             const userPhotos = parsePhotos(user.photos);
                             const mainPhoto = userPhotos.length > 0 ? userPhotos[0] : '/placeholder.png';
-                            
+
                             // Parse new fields
                             let relationshipTypes: string[] = [];
                             try {
                                 if (user.relationshipTypes) relationshipTypes = JSON.parse(user.relationshipTypes);
-                            } catch (e) {}
-                            
+                            } catch (e) { }
+
                             let interests: string[] = [];
                             try {
                                 if (user.interests) interests = JSON.parse(user.interests);
-                            } catch (e) {}
+                            } catch (e) { }
 
                             return (
                                 <TinderCard
                                     ref={childRefs[index]}
                                     className="absolute inset-0 z-10"
                                     key={user.id}
-                                    onSwipe={(dir) => swiped(dir, user.id)}
+                                    onSwipe={(dir) => swiped(dir, user.id, user.name || 'Uporabnik')}
                                     onCardLeftScreen={() => outOfFrame(user.id)}
                                     preventSwipe={['up', 'down']}
                                 >
@@ -161,7 +222,7 @@ function BrowseContent() {
                                                         {user.name || "Uporabnik"}
                                                         <span className="text-xl font-normal opacity-90">{user.birthDate ? new Date().getFullYear() - new Date(user.birthDate).getFullYear() : ""}</span>
                                                     </h3>
-                                                    
+
                                                     {/* Relationship Types Tags */}
                                                     <div className="flex flex-wrap gap-1 mt-2 mb-2">
                                                         {relationshipTypes.slice(0, 3).map(rt => {
@@ -174,14 +235,15 @@ function BrowseContent() {
                                                         <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
                                                         {user.location || "Slovenija"}
                                                     </p>
-                                                    
-                                                    {/* Interests */}
-                                                     <div className="flex flex-wrap gap-1 mt-1">
-                                                        {interests.slice(0, 3).map(tag => (
-                                                             <span key={tag} className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{tag}</span>
-                                                        ))}
-                                                        {interests.length > 3 && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">+{interests.length - 3}</span>}
-                                                    </div>
+
+                                                    {interests.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {interests.slice(0, 3).map(tag => (
+                                                                <span key={tag} className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{tag}</span>
+                                                            ))}
+                                                            {interests.length > 3 && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">+{interests.length - 3}</span>}
+                                                        </div>
+                                                    )}
 
                                                 </div>
 
@@ -189,7 +251,7 @@ function BrowseContent() {
                                                 <Link
                                                     href={`/users/${user.id}`}
                                                     className="mb-1 p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 transition hover:scale-110 flex-shrink-0"
-                                                    onPointerDown={(e) => e.stopPropagation()} 
+                                                    onPointerDown={(e) => e.stopPropagation()}
                                                 >
                                                     <Info size={24} />
                                                 </Link>
@@ -201,10 +263,10 @@ function BrowseContent() {
                         })}
                     </div>
                 ) : (
-                    <div className="text-center p-10 bg-white rounded-2xl shadow-sm border border-gray-100">
-                        <p className="text-xl font-bold text-gray-800 mb-2">Ni več oseb.</p>
-                        <p className="text-gray-500 mb-4">Poskusite spremeniti iskanje ali pridite nazaj kasneje.</p>
-                        <Link href="/dashboard" className="text-pink-600 font-bold hover:underline">Nazaj na domov</Link>
+                    <div className="text-center p-10 bg-white rounded-2xl shadow-sm border border-gray-100 max-w-md">
+                        <p className="text-xl font-bold text-gray-800 mb-2">Ni rezultatov. 😕</p>
+                        <p className="text-gray-500 mb-4">Poskusi spremeniti filtre (starost, regija...).</p>
+                        <button onClick={() => setFilters({ ageMin: 18, ageMax: 99, region: null, heightMin: 0, hasPhoto: false })} className="text-pink-600 font-bold hover:underline">Ponastavi filtre</button>
                     </div>
                 )}
 

@@ -13,16 +13,17 @@ export async function POST(req: NextRequest) {
     const userId = decoded.userId;
 
     const body = await req.json();
-    const { title, content, location } = body;
-    
+    const { title, content, location, category, eventDate } = body;
+
     // Check limit for Men
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user?.gender === 'M') {
         const activeAds = await prisma.ad.count({
             where: { userId, isActive: true }
         });
-        if (activeAds >= 1) {
-            return NextResponse.json({ error: 'Moški lahko imajo samo 1 aktiven oglas.' }, { status: 403 });
+        // Let's relax the limit slightly or keep it strict? Keeping it strict for now.
+        if (activeAds >= 3) { // Increased limit slightly to 3 for better engagement
+            return NextResponse.json({ error: 'Imate preveč aktivnih oglasov.' }, { status: 403 });
         }
     }
 
@@ -31,12 +32,15 @@ export async function POST(req: NextRequest) {
             userId,
             title,
             content,
-            location
+            location,
+            category: category || "GENERAL",
+            eventDate: eventDate ? new Date(eventDate) : null
         }
     });
 
     return NextResponse.json(ad);
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: 'Napaka na strežniku' }, { status: 500 });
   }
 }
@@ -45,7 +49,16 @@ export async function GET(req: NextRequest) {
     // Return all active ads
     const ads = await prisma.ad.findMany({
         where: { isActive: true },
-        include: { user: { select: { name: true, gender: true } } },
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    gender: true,
+                    isVerified: true,
+                    verificationStatus: true
+                }
+            }
+        },
         orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json(ads);

@@ -10,7 +10,9 @@ export async function POST(req: NextRequest) {
     }
     const senderId = sender.id;
 
-    const { receiverId } = await req.json();
+    const body = await req.json();
+    const { receiverId, allowMessage, inviteMessage } = body;
+
     if (!receiverId) {
       return NextResponse.json({ error: 'Manjkajoči podatki' }, { status: 400 });
     }
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (mutualInterest) {
-      // It's a match!
+      // It's a match! Both have interest, update both to APPROVED
       const [updatedInterest, newInterest] = await prisma.$transaction([
         prisma.interest.update({
           where: { id: mutualInterest.id },
@@ -41,7 +43,9 @@ export async function POST(req: NextRequest) {
             senderId: senderId,
             receiverId: receiverId,
             status: 'APPROVED',
-          },
+            allowMessage: allowMessage || false,
+            inviteMessage: inviteMessage || null,
+          } as any,
         }),
       ]);
       return NextResponse.json({ message: "It's a match!", match: true, interest: newInterest });
@@ -62,9 +66,17 @@ export async function POST(req: NextRequest) {
           senderId,
           receiverId,
           status: 'PENDING',
-        },
+          allowMessage: allowMessage || false,
+          inviteMessage: inviteMessage || null,
+        } as any,
       });
-      return NextResponse.json({ message: "Zanimanje poslano!", match: false, interest });
+
+      // Return different message based on whether invite was sent
+      const message = allowMessage
+        ? "Like poslano s povabilom!"
+        : "Like poslano!";
+
+      return NextResponse.json({ message, match: false, interest });
     }
   } catch (error) {
     console.error("Interest API Error:", error);
@@ -85,7 +97,7 @@ export async function GET(req: NextRequest) {
       where: { receiverId: userId, status: 'PENDING' },
       include: {
         sender: {
-          select: { id: true, name: true, photos: true },
+          select: { id: true, name: true, photos: true, gender: true, isVerified: true },
         },
       },
     });

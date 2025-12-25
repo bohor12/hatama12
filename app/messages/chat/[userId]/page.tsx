@@ -1,9 +1,10 @@
 "use client";
 import React, { useEffect, useState, useRef, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Navbar from "../../../components/Navbar";
+import { icebreakers } from "@/lib/icebreakers";
 
 export default function Chat({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
@@ -12,6 +13,7 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
     const [newMessage, setNewMessage] = useState("");
     const [otherUser, setOtherUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [showIcebreakers, setShowIcebreakers] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Fetch user info & messages
@@ -87,6 +89,11 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
         }
     };
 
+    const handleIcebreaker = (question: string) => {
+        setNewMessage(question);
+        setShowIcebreakers(false);
+    };
+
     if (loading) return <div className="min-h-screen flex items-center justify-center">Nalaganje...</div>;
 
     return (
@@ -105,7 +112,12 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
                              )}
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900">{otherUser.name}</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="font-bold text-gray-900">{otherUser.name}</h1>
+                                {otherUser.verificationStatus === 'APPROVED' && (
+                                    <CheckCircle className="w-4 h-4 text-blue-600" />
+                                )}
+                            </div>
                             <p className="text-xs text-green-500 flex items-center gap-1">
                                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                 Online
@@ -146,6 +158,13 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
             {/* Input Area */}
             <footer className="bg-white p-4 border-t border-gray-200">
                 <form onSubmit={handleSend} className="flex gap-2 max-w-4xl mx-auto">
+                    <button 
+                        type="button"
+                        onClick={() => setShowIcebreakers(!showIcebreakers)}
+                        className="bg-purple-100 hover:bg-purple-200 text-purple-600 p-3 rounded-full transition"
+                    >
+                        <Sparkles size={20} />
+                    </button>
                     <input 
                         type="text" 
                         value={newMessage}
@@ -162,6 +181,30 @@ export default function Chat({ params }: { params: Promise<{ userId: string }> }
                     </button>
                 </form>
             </footer>
+
+            {/* Icebreaker Popup */}
+            {showIcebreakers && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4" onClick={() => setShowIcebreakers(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
+                            <Sparkles size={24} />
+                            Ledolomilci
+                        </h2>
+                        <p className="text-sm text-gray-600 mb-4">Kliknite na vprašanje, da ga uporabite:</p>
+                        <div className="space-y-2">
+                            {icebreakers.map((q, idx) => (
+                                <button 
+                                    key={idx}
+                                    onClick={() => handleIcebreaker(q)}
+                                    className="w-full text-left p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition border border-purple-100"
+                                >
+                                    {q}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import FadeIn from "../components/ui/FadeIn";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,20 +20,22 @@ export default function Login() {
     });
 
     if (res.ok) {
+      toast.success("Uspešna prijava!");
       router.push("/dashboard");
     } else {
       const data = await res.json();
       setError(data.error || "Prijava ni uspela");
+      toast.error(data.error || "Prijava ni uspela");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg">
+      <FadeIn className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg">
         <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Prijava</h2>
-        
-        {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
-        
+
+        {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm text-center">{error}</div>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -39,7 +43,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 outline-none"
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 outline-none transition"
               required
             />
           </div>
@@ -49,18 +53,18 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 outline-none"
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 outline-none transition"
               required
             />
           </div>
-          <button type="submit" className="w-full bg-pink-600 text-white py-2 rounded-lg font-bold hover:bg-pink-700 transition">
+          <button type="submit" className="w-full bg-pink-600 text-white py-2 rounded-lg font-bold hover:bg-pink-700 transition transform hover:scale-[1.02]">
             Prijavi se
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
           Še nimate računa? <Link href="/register" className="text-pink-600 hover:underline">Registrirajte se</Link>
         </p>
-      </div>
+      </FadeIn>
     </div>
   );
 }
